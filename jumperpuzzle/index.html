@@ -60,37 +60,7 @@
             num.value=arr[nr-1];
             num.id = nr;
             num.onclick = function () {
-              if (parseInt(this.value) > 0)
-                if (start > 0) {
-                  end = parseInt(this.id);
-                  sr = Math.ceil(start / size);
-                  sc = parseInt(start % size);
-                  if (sc == 0)
-                    sc = size;
-                  er = Math.ceil(end / size);
-                  ec = parseInt(end % size);
-                  if (ec == 0)
-                    ec = size;
-                  sdist = Math.abs(sr-er);
-                  edist = Math.abs(sc-ec);
-
-                  if (sdist == edist)
-                    chk(sdist);
-                  else {
-                    let diff = Math.abs((start - end));
-                    if (sr == er || sc == ec)
-                      if (diff > size-1) {
-                        if (diff % size == 0)
-                          chk(diff / size);
-                      } else {
-                        chk(diff);
-                      }
-                  }
-                } else {
-                  start = parseInt(this.id);
-                  this.style.background = "lime";
-                  showvalid(this);
-                }
+              click(this);
             };
             num.style = "font-size:48px;width:75px;height:75px";
             field.appendChild(num);
@@ -98,6 +68,40 @@
           var br = document.createElement("br");
           field.appendChild(br);
         }
+      }
+
+      function click(el) {
+        if (parseInt(el.value) > 0)
+          if (start > 0) {
+            end = parseInt(el.id);
+            sr = Math.ceil(start / size);
+            sc = parseInt(start % size);
+            if (sc == 0)
+              sc = size;
+            er = Math.ceil(end / size);
+            ec = parseInt(end % size);
+            if (ec == 0)
+              ec = size;
+            sdist = Math.abs(sr-er);
+            edist = Math.abs(sc-ec);
+
+            if (sdist == edist)
+              chk(sdist);
+            else {
+              let diff = Math.abs((start - end));
+              if (sr == er || sc == ec)
+                if (diff > size-1) {
+                  if (diff % size == 0)
+                    chk(diff / size);
+                } else {
+                  chk(diff);
+                }
+            }
+          } else {
+            start = parseInt(el.id);
+            el.style.background = "lime";
+            showvalid(el);
+          }
       }
 
       function chk(diff) {
