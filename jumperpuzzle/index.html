@@ -74,16 +74,16 @@
         if (parseInt(el.value) > 0)
           if (start > 0) {
             end = parseInt(el.id);
-            sr = Math.ceil(start / size);
-            sc = parseInt(start % size);
+            let sr = Math.ceil(start / size);
+            let sc = parseInt(start % size);
             if (sc == 0)
               sc = size;
-            er = Math.ceil(end / size);
-            ec = parseInt(end % size);
+            let er = Math.ceil(end / size);
+            let ec = parseInt(end % size);
             if (ec == 0)
               ec = size;
-            sdist = Math.abs(sr-er);
-            edist = Math.abs(sc-ec);
+            let sdist = Math.abs(sr-er);
+            let edist = Math.abs(sc-ec);
 
             if (sdist == edist)
               chk(sdist);
@@ -149,13 +149,13 @@
       }
 
       function highlight(id) {
-        sr = Math.ceil(start  / size);
-        sc = parseInt(start  % size);
+        let sr = Math.ceil(start  / size);
+        let sc = parseInt(start  % size);
         if (sc == 0)
           sc = size;
 
-        r = Math.ceil(id  / size);
-        c = parseInt(id  % size);
+        let r = Math.ceil(id  / size);
+        let c = parseInt(id  % size);
         if (c == 0)
           c = size;
 
