@@ -33,14 +33,11 @@
           if (number > max)
             number = 1;
         }
-        console.log(remaining);
         for (i=0; i < size*size; i++) {
           index = Math.floor(Math.random() * remaining.length);
-          console.log(index);
           arr.push(remaining[index]);
           remaining.splice(index, 1);
         }
-        console.log(arr);
         reset();
       }
 
