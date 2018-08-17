@@ -62,6 +62,16 @@
             num.onclick = function () {
               click(this);
             };
+	    num.onmouseover = function () {
+              if (start < 1) {
+                this.style.background = "lime";
+              }
+            };
+            num.onmouseout = function () {
+              if (start < 1) {
+                this.style.background = "";
+              }
+            };  
             num.style = "font-size:48px;width:75px;height:75px";
             field.appendChild(num);
           }
