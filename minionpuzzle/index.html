@@ -1,0 +1,527 @@
+<html>
+  <head>
+    <title>
+      Minion puzzle prototype
+    </title>
+    <style>
+      .noselect {
+        -webkit-touch-callout: none; /* iOS Safari */
+          -webkit-user-select: none; /* Safari */
+           -khtml-user-select: none; /* Konqueror HTML */
+             -moz-user-select: none; /* Firefox */
+              -ms-user-select: none; /* Internet Explorer/Edge */
+                  user-select: none; /* Non-prefixed version, currently supported by Chrome and Opera */
+      }
+      .abilitybtn {
+        background-color: yellow;
+        font-size:14px;
+        width:120px;
+        height:35px;
+      }
+    </style>
+  </head>
+  <body class="noselect" style="font-size:22px;background:#DDD;width:640px;min-height:240px;margin:auto;">
+    Incoming damage: <span id="power">0</span>, spells cast: <span id="casts">0</span>
+    <div id="field" style="" onmouseout="resetabilitytext(this)">
+    </div>
+    <p id="abilitieselement">
+    </p>
+    <p id="abilitytext" style="color:blue;">
+    </p>
+    <p>
+      Minions: <input type="number" value="5" min="5" max="25" id="minioncount" style="font-size:32px;width:75px;">
+      <input type="button" value="NEW GAME" style="font-size:18px;width:125px;height:75px" onclick="newgame()">
+      <!--<input type="button" value="RESET" style="font-size:18px;width:125px;height:75px" onclick="reset()">-->
+    </p>
+
+    <script>
+      let maxattack = 10, maxhealth = 10;
+      let minionabilities = [
+        {
+          name: "Untargetable",
+          description: "Can't be targeted."
+        },
+        {
+          name: "Immunity",
+          description: "Can only be damaged when an odd amount of spells have been casted."
+        },
+        {
+          name: "Shield",
+          description: "Absorbs all damage the first time it receives damage."
+        },
+        {
+          name: "Give strength",
+          description: "After dying all minions get +1 attack."
+        },
+        {
+          name: "Give armor",
+          description: "After dying all minions get +2 health."
+        },
+        {
+          name: "Protection",
+          description: "Can only receive 3 damage at once."
+        },
+        {
+          name: "Resilliance",
+          description: "If health falls below 5 after being damaged, set it to 5."
+        },
+        {
+          name: "Growing",
+          description: "Gets +1 health after a minion receives damage."
+        },
+        {
+          name: "Absorption",
+          description: "Gets 5 health each time a minion dies."
+        },
+        {
+          name: "Reduction",
+          description: "Reduces damage from spells by 1."
+        },
+        {
+          name: "Trickster",
+          description: "Gives all minions +1 health after each 3rd time the player casts a spell."
+        },
+        {
+          name: "Confusion",
+          description: "Swaps attack and health after each spell cast."
+        }/*,
+        {
+          name: "Giant support",
+          description: "After dying doubles the health of the highest health minion(s)."
+        },
+        {
+          name: "Tiny support",
+          description: "After dying doubles the health of the lowest health minion(s)."
+        },
+        {
+          name: "Giant backup",
+          description: "After dying spawns a copy of the highest health minion(s)."
+        },
+        {
+          name: "Tiny backup",
+          description: "After dying spawns a copy of the lowest health minion(s)."
+        },
+        {
+          name: "Last resort",
+          description: "After dying if there are less than 3 minions alive on the battlefield, summon 1/1 minions until there are 3 minions on the battlefield."
+        },
+        {
+          name: "Brotherhood",
+          description: "The minions to the left and right have 10 extra health."
+        },
+        {
+          name: "Incarnation",
+          description: "Gets + 5 toughness each time a minion spawns."
+        }*/
+      ];
+      let abilities = [
+        {
+          name: "Silence",
+          description: "Remove target's ability."
+        },
+        {
+          name: "Kill equals",
+          description: "Kill all minions with equal attack and health."
+        },
+        {
+          name: "Weak swap",
+          description: "Swap the attack power and health of all minions on the battlefield which have 1-5 health."
+        },
+        {
+          name: "Tough swap",
+          description: "Swap the attack power and health of all minions on the battlefield which have 6-10 health."
+        },
+        {
+          name: "Meteor",
+          description: "Deal 5 damage to target."
+        },
+        {
+          name: "Chainreaction",
+          description: "Deal 1 damage to all minions, each time exactly 1 minion died it will be recast."
+        },
+        {
+          name: "Even damage",
+          description: "Deal 2 damage to all minions with an even damage amount."
+        },
+        {
+          name: "Odd damage",
+          description: "Deal 2 damage to all minions with an odd damage amount."
+        },
+        {
+          name: "Even health",
+          description: "Deal 2 damage to all minions with an even health amount."
+        },
+        {
+          name: "Odd health",
+          description: "Deal 2 damage to all minions with an odd health amount."
+        },
+        {
+          name: "Self harm",
+          description: "All minions with lower damage than health deal 2 damage to itself."
+        },
+        {
+          name: "Channel damage",
+          description: "Deal 3 damage to all minions with the same damage as the target."
+        },
+        {
+          name: "Channel health",
+          description: "Deal 3 damage to all minions with the same health as the target."
+        },
+        {
+          name: "Kill giants",
+          description: "Kill all minions with at least 20 health."
+        }/*,
+        {
+          name: "Chain 1",
+          description: "Deal 8 damage to target, each time there is excess damage that damage gets dealt to the minion to it's right until it reaches the end of the row."
+        },
+        {
+          name: "Chain 2",
+          description: "Deal 2 damage to target, each time this spell kills a minion it gets recasted on the minion to it's right until it reaches the end of the row."
+        },
+        {
+          name: "Neighbours",
+          description: "Deal 2 damage to target's neighbours."
+        },
+        {
+          name: "Sidepunch",
+          description: "Deal 3 damage to the 2 neighbours to left and right."
+        },
+        {
+          name: "Weakest link",
+          description: "If the minions directly to the left and right of the target have different health amounts, kill the minion with the lowest health."
+        }*/
+      ];
+      let power = document.getElementById("power");
+      let casts = document.getElementById("casts");
+      let field = document.getElementById("field");
+      let minioncount = document.getElementById("minioncount");
+      let abilitytext = document.getElementById("abilitytext");
+      let abilitieselement = document.getElementById("abilitieselement");
+      let fieldarray = [];
+      let waitingfortarget = 0, selectedability = {}, lastability = 0;
+
+      function newgame() {
+        fieldarray = [];
+        for (i=0; i < minioncount.value; i++) {
+          attack = Math.ceil(Math.random() * maxattack);
+          health = Math.ceil(Math.random() * maxhealth);
+          ability = Math.ceil(Math.random() * minionabilities.length);
+          fieldarray.push({attack, health, ability});
+        }
+        casts.innerHTML = 0;
+        if (waitingfortarget > 0) {
+          selectedability.style.background = "yellow";
+          selectedability = {};
+          waitingfortarget = 0;
+        }
+        updatefield();
+      }
+
+      function updatefield() {
+        // [todo] need to actually update all minions instead of redrawing everything
+        let totalpower = 0;
+        field.innerHTML = "";
+        for (i=0; i < fieldarray.length; i++) {
+          let monsterel = document.createElement("div");
+          monsterel.id = i;
+          monsterel.style = "background:#CCC;text-align:center;width:106px;height:106px;display:inline-grid;border-style:solid;border-width: 2px;margin:5px;";
+          if (fieldarray[i].health < 1) {
+            monsterel.style.background = "red";
+            monsterel.style.pointerEvents = "none";
+          } else if (fieldarray[i].ability == 1)
+            monsterel.style.pointerEvents = "none";
+          monsterel.onclick = function () {
+            target(this.id);
+          };
+          monsterel.onmouseover = function () {
+            this.style.background = "orange";
+            if (waitingfortarget < 1) {
+
+              if (fieldarray[this.id].ability > 0)
+                abilitytext.innerHTML = minionabilities[fieldarray[this.id].ability-1].description;
+            }
+          };
+          monsterel.onmouseout = function () {
+            this.style.background = "#CCC";
+          };
+          let p = document.createElement("div");
+          p.style = "font-size:44px;color:#EEE;";
+          if (fieldarray[i].health < 1)
+            p.innerHTML = "dead";
+          else
+            p.innerHTML = fieldarray[i].attack + "/" + fieldarray[i].health;
+          monsterel.appendChild(p);
+          p = document.createElement("div");
+          p.style = "font-size:18px;color:blue;";
+          if (fieldarray[i].ability > 0 && fieldarray[i].health > 0)
+            p.innerHTML = minionabilities[fieldarray[i].ability-1].name;
+          monsterel.appendChild(p);
+          field.appendChild(monsterel);
+
+          if (fieldarray[i].health > 0)
+            totalpower += fieldarray[i].attack;
+        }
+        power.innerHTML = totalpower;
+      }
+
+      function resetabilitytext() {
+        if (waitingfortarget > 0)
+          abilitytext.innerHTML = "Select minion";
+        else
+          abilitytext.innerHTML = "Hover over minions and abilities to show details.";
+      }
+
+      function abilitydescription(ab) {
+        abilitytext.innerHTML = abilities[ab-1].description;
+      }
+
+      function abilityexecute(el) {
+        if (el.id != lastability && waitingfortarget > 0) {
+         selectedability.style.background = "yellow";
+         selectedability = {};
+         waitingfortarget = 0;
+        }
+        lastability = el.id;
+
+        if (el.id == 1 || el.id == 5 || el.id == 12 || el.id == 13) { // silence, channel attack, channel health
+            waitingfortarget = el.id;
+            resetabilitytext();
+        } else if (el.id == 2) { // kill equals
+          for (let i=0; i < fieldarray.length; i++) {
+            if (fieldarray[i].health > 0)
+              if (fieldarray[i].attack == fieldarray[i].health)
+                kill(i);
+          }
+          updatefield();
+        } else if (el.id == 3) { // weak swap
+          for (let i=0; i < fieldarray.length; i++) {
+            if (fieldarray[i].health > 0)
+              if (fieldarray[i].health < 6) {
+                let attack = fieldarray[i].attack;
+                fieldarray[i].attack = fieldarray[i].health;
+                fieldarray[i].health = attack;
+              }
+          }
+          updatefield();
+        } else if (el.id == 4) { // tough swap
+          for (let i=0; i < fieldarray.length; i++) {
+            if (fieldarray[i].health > 5) {
+              let attack = fieldarray[i].attack;
+              fieldarray[i].attack = fieldarray[i].health;
+              fieldarray[i].health = attack;
+            }
+          }
+          updatefield();
+        } else if (el.id == 6) { // Chainreaction
+          let dead = 1;
+          while (dead == 1) {
+            let currdead = 0;
+            for (let i=0; i < fieldarray.length; i++) {
+             if (fieldarray[i].health > 0) {
+               damage(i, 1);
+               if (fieldarray[i].health < 1)
+                 currdead++;
+             }
+            }
+            dead = currdead;
+          }
+          updatefield();
+        } else if (el.id == 7) { // even damage
+           for (let i=0; i < fieldarray.length; i++) {
+             if (fieldarray[i].health > 0)
+               if (fieldarray[i].attack % 2 == 0)
+                 damage(i, 2);
+           }
+           updatefield();
+        } else if (el.id == 8) { // odd damage
+         for (let i=0; i < fieldarray.length; i++) {
+           if (fieldarray[i].health > 0)
+             if (fieldarray[i].attack % 2 == 1)
+               damage(i, 2);
+         }
+         updatefield();
+       } else if (el.id == 9) {// even toughness
+         for (let i=0; i < fieldarray.length; i++) {
+           if (fieldarray[i].health > 0)
+             if (fieldarray[i].health % 2 == 0)
+               damage(i, 2);
+         }
+         updatefield();
+       } else if (el.id == 10) { // odd toughness
+         for (let i=0; i < fieldarray.length; i++) {
+           if (fieldarray[i].health > 0)
+             if (fieldarray[i].health % 2 == 1)
+               damage(i, 2);
+         }
+         updatefield();
+       } else if (el.id == 11) { // self harm
+         for (let i=0; i < fieldarray.length; i++) {
+           if (fieldarray[i].health > 0)
+             if (fieldarray[i].attack < fieldarray[i].health)
+               damage(i, 1);
+         }
+         updatefield();
+       } else if (el.id == 14) { // Kill giants
+         for (let i=0; i < fieldarray.length; i++) {
+           if (fieldarray[i].health > 19)
+               kill(i);
+         }
+         updatefield();
+       }
+
+        if (waitingfortarget > 0) {
+          el.style.background = "lime";
+          selectedability = el;
+        } else {
+          cast();
+        }
+      }
+
+      function target(id) {
+        if (waitingfortarget == 1) {
+          if (fieldarray[id].ability < 1)
+            return;
+          fieldarray[id].ability = 0;
+          updatefield();
+        } else if (waitingfortarget == 5) {
+          damage(id, 5);
+          updatefield();
+        } else if (waitingfortarget == 12) {
+          let comparison = fieldarray[id].attack;
+          for (let i=0; i < fieldarray.length; i++)
+            if (fieldarray[i].health > 0)
+              if (fieldarray[i].attack == comparison)
+                damage(i, 3);
+          updatefield();
+        } else if (waitingfortarget == 13) {
+          let comparison = fieldarray[id].health;
+          for (let i=0; i < fieldarray.length; i++)
+            if (fieldarray[i].health > 0)
+              if (fieldarray[i].health == comparison)
+                damage(i, 3);
+          updatefield();
+        }
+        if (waitingfortarget > 0) {
+          waitingfortarget = 0;
+          selectedability.style.background = "yellow";
+          selectedability = {};
+        }
+        cast();
+      }
+
+      function cast() {
+        casts.innerHTML = parseInt(casts.innerHTML) + 1;
+
+        if (parseInt(casts.innerHTML) % 3 == 0) { // Trickster
+          let count = 0;
+          for (let i=0; i < fieldarray.length; i++) {
+            if (fieldarray[i].health > 0)
+              if (fieldarray[i].ability == 11)
+                count++;
+          }
+          for (let i=0; i < fieldarray.length; i++) {
+            if (fieldarray[i].health > 0)
+              fieldarray[i].health += count;
+          }
+        }
+
+        // Swapper
+        for (let i=0; i < fieldarray.length; i++) {
+          if (fieldarray[i].health > 0)
+            if (fieldarray[i].ability == 12) {
+              let attack = fieldarray[i].attack;
+              fieldarray[i].attack = fieldarray[i].health;
+              fieldarray[i].health = attack;
+            }
+        }
+        updatefield();
+      }
+
+      function damage(index, amount) {
+        for (let i=0; i < fieldarray.length; i++) { // Reduction
+          if (fieldarray[i].health > 0)
+            if (fieldarray[i].ability == 10)
+              amount--;
+        }
+        if (amount < 1)
+          return;
+
+        if (fieldarray[index].ability == 6) // Protection
+          if (amount > 3)
+            amount = 3;
+
+        if ( (fieldarray[index].ability != 2 && fieldarray[index].ability != 3) || (fieldarray[index].ability == 2 && parseInt(casts.innerHTML) % 2 == 1) ) {// Immune & Shield
+          fieldarray[index].health -= amount;
+
+          for (let i=0; i < fieldarray.length; i++) { // Growing
+            if (fieldarray[i].health > 0)
+              if (fieldarray[i].ability == 8)
+                fieldarray[i].health++;
+          }
+
+          if (fieldarray[index].health < 1)
+            kill(index);
+          else if (fieldarray[index].ability == 7) // Resilliance
+            if (fieldarray[index].health < 5)
+              fieldarray[index].health = 5;
+          updatefield();
+        } else if (fieldarray[index].ability == 3) { // disable shield
+          fieldarray[index].ability = 0;
+        }
+      }
+
+      function kill(index) {
+        fieldarray[index].health = 0;
+
+        // abilities that react on deaths
+        if (fieldarray[index].ability == 4) { // Give strength
+          for (let i=0; i < fieldarray.length; i++)
+            if (fieldarray[i].health > 0)
+              if (fieldarray[i].attack += 1);
+        }
+        if (fieldarray[index].ability == 5) { // Give armor
+          for (let i=0; i < fieldarray.length; i++)
+            if (fieldarray[i].health > 0)
+              if (fieldarray[i].health += 2);
+        }
+
+        // other minion abilities that react on deaths
+        for (let i=0; i < fieldarray.length; i++) { // Absorption
+          if (fieldarray[i].health > 0)
+            if (fieldarray[i].ability == 9)
+              fieldarray[i].health += 5;
+        }
+      }
+
+      function init() {
+        for (i=0; i < abilities.length; i++) {
+          let abilityel = document.createElement("input");
+          abilityel.id = i+1;
+          abilityel.type = "button";
+          abilityel.value = abilities[i].name;
+          abilityel.classList = "abilitybtn";
+          abilityel.onclick = function () {
+            //if (waitingfortarget < 1)
+              abilityexecute(this);
+          };
+          abilityel.onmouseover = function () {
+            //if (waitingfortarget < 1)
+              abilitydescription(this.id);
+          };
+          abilityel.onmouseout = function () {
+            resetabilitytext();
+          };
+          abilitieselement.appendChild(abilityel);
+        }
+
+        waitingfortarget = 0;
+        casts.innerHTML = "0";
+        resetabilitytext();
+      }
+
+      init();
+      newgame();
+    </script>
+  </body>
+</html>
